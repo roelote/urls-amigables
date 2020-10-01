@@ -6,6 +6,7 @@ use App\Libro;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Redirect;
 
 class LibroController extends Controller
@@ -80,6 +81,14 @@ class LibroController extends Controller
 
             }
 
+                else{
+                    $path = "uploads/imagen-del-cusco.png";
+                }
+
+           //cambiar de tamaño la imagen con intervention, y cortar, public_path(), la ruta publica  
+
+             $img = Image::make(public_path('storage/'.$path))->fit(600, 360);
+             $img->save();
 
         //seccion de insertar en la bd
         //recuperamos cada campo, tambien se puede recuperar todo con all
@@ -139,10 +148,36 @@ class LibroController extends Controller
 
          $datos = $request->validate([
              'slug' => 'required',
-            'nombre' => 'required',
-            'contenido' =>'required'
+             'nombre' => 'required',
+             'contenido' =>'required',
+             'image_url' => 'image|mimes:jpeg,png,jpg,gif,svg'
         ]);
 
+      
+        if ($request->file('image_url')) {
+                $file = $request->file('image_url');
+                $url_nombre_img= $file->getClientOriginalName();
+
+                //aqui separamos la ulr para poder poner guiones y corregir
+
+                $filename = pathinfo($url_nombre_img, PATHINFO_FILENAME);
+                $extension = pathinfo($url_nombre_img, PATHINFO_EXTENSION);
+
+                $corrigiendo_nombre_image = Str::slug($filename, '-');
+
+                $image_correcta = $corrigiendo_nombre_image.'.'.$extension;
+
+                //guardamos la url en el direcctorio y su nombre tambien
+
+                $path = $request->file('image_url')->storeAs('uploads',$image_correcta, 'public'); 
+        }
+
+        else
+        {
+            $path = "uploads/imagen-del-cusco.png";
+        }
+       
+            
             
             // $urls = Str::slug($datos['nombre'], '-');
              
@@ -150,6 +185,7 @@ class LibroController extends Controller
             $libro->slug = $datos['slug'];
             $libro->nombre = $datos['nombre'];
             $libro->contenido = $datos['contenido'];
+            $libro->image_url = '/storage/'.$path;
             $libro->save();
 
         return redirect()->route('libros.index');
