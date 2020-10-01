@@ -18,6 +18,7 @@ class CreateLibrosTable extends Migration
             $table->string('slug')->unique();
             $table->string('nombre');
             $table->text('contenido');
+            $table->text('image_url')->nullable();
             $table->timestamps();
         });
     }

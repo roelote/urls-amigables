@@ -50,12 +50,37 @@ class LibroController extends Controller
         // validacion de informacion
         $datos = $request->validate([
             'nombre' => 'required',
-            'contenido' =>'required'
+            'contenido' =>'required',
+            'image_url' => 'image|mimes:jpeg,png,jpg,gif,svg'
+
         ]);
 
          $slug = Str::slug($datos['nombre'], '-');
 
-        
+     
+        //recuperamos la url de la imagen e insertamos, y guardamos en la direccion uploads
+
+        if ($request->file('image_url')) {
+
+                $file = $request->file('image_url');
+                $url_nombre_img= $file->getClientOriginalName();
+
+                //aqui separamos la ulr para poder poner guiones y corregir
+
+                $filename = pathinfo($url_nombre_img, PATHINFO_FILENAME);
+                $extension = pathinfo($url_nombre_img, PATHINFO_EXTENSION);
+
+                $corrigiendo_nombre_image = Str::slug($filename, '-');
+
+                $image_correcta = $corrigiendo_nombre_image.'.'.$extension;
+
+                //guardamos la url en el direcctorio y su nombre tambien
+
+                $path = $request->file('image_url')->storeAs('uploads',$image_correcta, 'public'); 
+
+            }
+
+
         //seccion de insertar en la bd
         //recuperamos cada campo, tambien se puede recuperar todo con all
 
@@ -68,9 +93,12 @@ class LibroController extends Controller
               'slug' => $slug,
               'nombre' => $datos['nombre'],
               'contenido' => $datos['contenido'],
+              'image_url' => '/storage/'.$path,
           ]);
 
-        return redirect()->route('libros.index');
+         return redirect()->route('libros.index');
+
+        
 
     }
 
